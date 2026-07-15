@@ -1,0 +1,59 @@
+#! alias uvi='uv pip install --no-cache --link-mode=copy'
+
+#! export http_proxy="http://proxy.alcf.anl.gov:3128"
+#! export https_proxy="http://proxy.alcf.anl.gov:3128"
+#! export no_proxy="localhost,127.0.0.1,*.alcf.anl.gov,*.anl.gov"
+
+source <(curl -fsSL https://bit.ly/ezpz-utils) && ezpz_setup_job && ezpz_load_modules
+
+# to use the python from `/opt/aurora/.../python-3.12.12-xxx/bin/python3`
+module load python
+
+#! python3 -m venv --system-site-packages newvenv
+source .newvenv/bin/activate
+
+pip install --no-cache torch torchvision torchaudio torchdata \
+#! uvi torch torchvision torchaudio torchdata \
+    --pre \
+    --index-url https://download.pytorch.org/whl/nightly/xpu \
+    --upgrade
+
+
+
+
+
+
+
+pip install --no-cache --pre \
+  torch==2.13.0.dev20260518+xpu \
+  torchvision==0.28.0.dev20260519+xpu \
+  torchaudio==2.11.0.dev20260519+xpu \
+  torchdata==0.12.0.dev20250220 \
+  --index-url https://download.pytorch.org/whl/nightly/xpu
+pip index versions torchdata --no-cache --pre \
+  --index-url https://download.pytorch.org/whl/nightly/xpu
+
+
+
+
+
+
+
+
+pip install --no-cache spmd_types torchcomms tyro tensorboard deepspeed mpi4py
+pip install --no-cache "git+https://github.com/zhenghh04/blendcorpus"
+pip install --no-cache "git+https://github.com/saforem2/ezpz"
+
+pip uninstall impi-rt
+python3 scripts/download_hf_assets.py --repo_id google/gemma-7b --assets tokenizer
+
+exit
+
+MODULE=ezpz.agpt
+CONFIG=agpt_2b
+ezpz launch python3 -m torchtitan.experiments.ezpz.train \
+    --module="${MODULE}" \
+    --config="${CONFIG}" \
+    --training.steps=10 \
+    --checkpoint.no-enable \
+    --training.local-batch-size=2

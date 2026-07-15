@@ -1,0 +1,20 @@
+module load oneapi/release/2025.3.1 hdf5 pti-gpu frameworks/2025.3.1
+source venv/bin/activate
+
+export HTTP_PROXY=http://proxy.alcf.anl.gov:3128
+export HTTPS_PROXY=http://proxy.alcf.anl.gov:3128
+export http_proxy=http://proxy.alcf.anl.gov:3128
+export https_proxy=http://proxy.alcf.anl.gov:3128
+git config --global http.proxy http://proxy.alcf.anl.gov:3128
+
+hf auth login
+
+uv pip install --no-deps --no-cache --link-mode=copy spmd_types tyro
+python3 convert_to_hf.py /flare/AuroraGPT/foremans/runs/agpt-20b-v2/torchtitan-ezpz/outputs/checkpoints/agpt-20b-sophiag-olmo-mix-1124-n512-gbs12288/step-4000 outputs/evals/agpt-20b-v2 --model_name experiments.ezpz.agpt --model_flavor 20b --export_dtype bfloat16
+
+
+python3 -m venv --system-site-packages venv
+cd torchtitan
+git checkout ezpz
+pip install --force-reinstall --no-deps -e .
+pip install --no-deps -e .
