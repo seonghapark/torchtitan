@@ -45,9 +45,8 @@ pip install --no-cache "git+https://github.com/zhenghh04/blendcorpus"
 pip install --no-cache "git+https://github.com/saforem2/ezpz"
 
 pip uninstall impi-rt
-python3 scripts/download_hf_assets.py --repo_id google/gemma-7b --assets tokenizer
+## then download model from hf, using the download_all_models.sh
 
-exit
 
 MODULE=ezpz.agpt
 CONFIG=agpt_2b
