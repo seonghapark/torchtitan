@@ -47,6 +47,46 @@ pip install --no-cache "git+https://github.com/saforem2/ezpz"
 pip uninstall impi-rt
 ## then download model from hf, using the download_all_models.sh
 
+export HF_HOME=/lus/flare/projects/datascience/seonghapark/torchtitan/datasets
+export HF_DATASETS_CACHE="${HF_HOME}/.cache"
+
+./torchtitan/models/gemma/run_sft.sh \
+    --dataset_name AI-MO/NuminaMath-CoT \
+    --dataset_split train \
+    --instruction_key problem \
+    --output_key solution \
+    --output_dir outputs/gemma-7b-numina \
+    --num_epochs 1 \
+    --per_device_batch_size 1 \
+    --gradient_accumulation_steps 16 \
+    --lr 1e-5 \
+    --warmup_ratio 0.03 \
+    --max_seq_len 2048 \
+    --save_interval 2000 \
+    --log_interval 20
+
+## tyro가 bool 옵션을 처리하는 방식 때문입니다.
+## bool 타입 필드가 기본값 True일 때, 이를 False로 만들려면
+## --no_<필드명> 이라는 별도 flag를 씁니다.
+## --activation_checkpoint False처럼 값으로 전달하는 방식은 지원 안 함 → False가 unrecognized argument로 잡힌 것.
+
+./torchtitan/models/gemma/run_sft.sh \
+    --dataset_name AI-MO/NuminaMath-CoT \
+    --dataset_split train \
+    --instruction_key problem \
+    --output_key solution \
+    --output_dir outputs/gemma-7b-numina \
+    --num_epochs 1 \
+    --per_device_batch_size 2 \
+    --gradient_accumulation_steps 8 \
+    --lr 1e-5 \
+    --warmup_ratio 0.03 \
+    --max_seq_len 1024 \
+    --no_activation_checkpoint \
+    --save_interval 2000 \
+    --log_interval 20
+
+
 
 MODULE=ezpz.agpt
 CONFIG=agpt_2b
