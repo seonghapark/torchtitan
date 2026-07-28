@@ -1,13 +1,22 @@
-#! alias uvi='uv pip install --no-cache --link-mode=copy'
+module load python
+alias uvi='uv pip install --no-cache --link-mode=copy'
 
-#! export http_proxy="http://proxy.alcf.anl.gov:3128"
-#! export https_proxy="http://proxy.alcf.anl.gov:3128"
-#! export no_proxy="localhost,127.0.0.1,*.alcf.anl.gov,*.anl.gov"
+export http_proxy="http://proxy.alcf.anl.gov:3128"
+export https_proxy="http://proxy.alcf.anl.gov:3128"
+export no_proxy="localhost,127.0.0.1,*.alcf.anl.gov,*.anl.gov"
+
+uv venv \
+    --system-site-packages \
+    --relocatable \
+    --no-cache \
+    --link-mode=copy \
+    --python=$(which python3)
+source .venv/bin/activate
+
+gh repo clone saforem2/torchtitan -- --branch ezpz
+cd torchtitan
 
 source <(curl -fsSL https://bit.ly/ezpz-utils) && ezpz_setup_job && ezpz_load_modules
-
-# to use the python from `/opt/aurora/.../python-3.12.12-xxx/bin/python3`
-module load python
 
 # Required for per-node XPU power / util sampling (see _ResourceMonitor in
 # torchtitan/models/gemma/train.py). Without this, `xpu-smi` is not on PATH
@@ -15,46 +24,36 @@ module load python
 # stats only. Version pinned to the current default; drop the "/1.2.42" to
 # always take the latest.
 module load xpu-smi/1.2.42
-
-#! python3 -m venv --system-site-packages newvenv
-source .newvenv/bin/activate
-
-pip install --no-cache torch torchvision torchaudio torchdata \
-#! uvi torch torchvision torchaudio torchdata \
-    --pre \
-    --index-url https://download.pytorch.org/whl/nightly/xpu \
-    --upgrade
+# Weights & Biases: for logging train/val loss+accuracy and XPU util/power.
+pip install --no-cache wandb
 
 
 
+###########
 
-
+torch==2.13.0.dev20260531+xpu
+torchvision==0.28.0.dev20260601+xpu
+torchaudio==2.11.0.dev20260531+xpu
+torchdata
+--index-url https://download.pytorch.org/whl/nightly/xpu
 
 
 pip install --no-cache --pre \
-  torch==2.13.0.dev20260518+xpu \
+  torch==2.13.0.dev20260530+xpu \
   torchvision==0.28.0.dev20260519+xpu \
   torchaudio==2.11.0.dev20260519+xpu \
   torchdata==0.12.0.dev20250220 \
   --index-url https://download.pytorch.org/whl/nightly/xpu
 pip index versions torchdata --no-cache --pre \
   --index-url https://download.pytorch.org/whl/nightly/xpu
+###########
 
 
+uvi spmd_types torchcomms tyro tensorboard deepspeed mpi4py
+uvi "git+https://github.com/zhenghh04/blendcorpus"
+uvi "git+https://github.com/saforem2/ezpz"
 
-
-
-
-
-
-pip install --no-cache spmd_types torchcomms tyro tensorboard deepspeed mpi4py
-pip install --no-cache "git+https://github.com/zhenghh04/blendcorpus"
-pip install --no-cache "git+https://github.com/saforem2/ezpz"
-
-# Weights & Biases: for logging train/val loss+accuracy and XPU util/power.
-pip install --no-cache wandb
-
-pip uninstall impi-rt
+uv pip uninstall impi-rt
 ## then download model from hf, using the download_all_models.sh
 
 export HF_HOME=/lus/flare/projects/datascience/seonghapark/torchtitan/datasets
@@ -75,14 +74,16 @@ mkdir -p "${WANDB_DIR}"
 # export WANDB_MODE=offline
 # export WANDB_API_KEY="<your-key-here>"   # or use `wandb login` beforehand
 
+export start=$(date -d "5 hours ago" '+%Y-%m-%d %H:%M:%S')
+
 ./torchtitan/models/gemma/run_sft.sh \
     --dataset_name AI-MO/NuminaMath-CoT \
     --dataset_split train \
     --instruction_key problem \
     --output_key solution \
     --output_dir outputs/gemma-7b-numina \
-    --num_epochs 1 \
-    --per_device_batch_size 1 \
+    --num_epochs 10 \
+    --per_device_batch_size 8 \
     --gradient_accumulation_steps 16 \
     --lr 1e-5 \
     --warmup_ratio 0.03 \

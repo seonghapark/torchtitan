@@ -57,3 +57,28 @@ class GemmaSFTConfig:
     # Save an intermediate HF-format checkpoint every `save_interval` optimizer
     # steps. Set to 0 to disable intermediate saves.
     save_interval: int = 0
+
+    # ---- Validation ----
+    # Fraction of the training records held out for validation. Set to 0 to
+    # disable validation entirely. Split is deterministic (uses `seed`).
+    validation_split: float = 0.02
+    # Run validation every `eval_interval` optimizer steps. Set to 0 to only
+    # evaluate at the end of each epoch.
+    eval_interval: int = 200
+    # Cap the number of validation batches per eval (0 = full pass).
+    eval_max_batches: int = 0
+
+    # ---- Weights & Biases ----
+    # Enable Weights & Biases logging (rank 0 only). Requires `pip install wandb`
+    # and `wandb login` (or WANDB_API_KEY env). Falls back silently if wandb
+    # is not importable.
+    enable_wandb: bool = False
+    wandb_project: str = "torchtitan-gemma-sft"
+    wandb_entity: str | None = None
+    wandb_run_name: str | None = None
+    # "online" | "offline" | "disabled". Overrides WANDB_MODE.
+    wandb_mode: str = "online"
+
+    # ---- Resource monitoring (logged to wandb) ----
+    # Interval in seconds between XPU/CUDA util + power samples. 0 disables.
+    resource_log_interval_sec: float = 30.0
