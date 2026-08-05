@@ -1,0 +1,28 @@
+> qsub -I -A datascience -l filesystems=home:tegu -l select=1 -l walltime=12:00:00
+> cd /lus/tegu/projects/datascience/seonghapark/torchtitan
+
+module add miniforge3/25.11.0-1
+ml add intel_gpu_umd_aicoe/2026.06.19
+module add cmake
+unset CMAKE_ROOT
+module add ninja
+module add pti-gpu
+module add hdf5
+
+export ZE_FLAT_DEVICE_HIERARCHY=FLAT
+export CCL_OP_SYNC=1
+export CCL_ATL_SYNC_COLL=1
+
+conda activate /lus/tegu/projects/datasets/software/26.181.0/wheelforge/envs/conda_envs/RC4_vllm_xpu_kernels_0.1.11.1_icu73_vllm_0.26.0_triton_3.7.2_nre_pt_2.13.0_rel_one_2026.1.0_np_2.3.5_python_3.12.12
+
+# uv venv --system-site-packages --relocatable --python=$(which python3) venv
+source venv/bin/activate
+
+export HTTP_PROXY=http://proxy.alcf.anl.gov:3128
+export HTTPS_PROXY=http://proxy.alcf.anl.gov:3128
+export http_proxy=http://proxy.alcf.anl.gov:3128
+export https_proxy=http://proxy.alcf.anl.gov:3128
+git config --global http.proxy http://proxy.alcf.anl.gov:3128
+
+uv pip install --no-cache "git+https://github.com/seonghapark/blendcorpus"
+uv pip install --no-cache "git+https://github.com/seonghapark/ezpz"
